@@ -18,6 +18,9 @@ contract ChimpersMigration is OwnableRoles {
     /// @notice Error when claims are closed
     error ClaimsClosed();
 
+    /// @notice Error when batch size exceeds maximum
+    error BatchTooLarge();
+
     /*//////////////////////////////////////////////////////////////
                                 STORAGE
     //////////////////////////////////////////////////////////////*/
@@ -53,5 +56,17 @@ contract ChimpersMigration is OwnableRoles {
         if (claimsClosed) revert ClaimsClosed();
         oldChimpers.transferFrom(msg.sender, address(this), tokenId);
         newChimpers.mint(msg.sender, tokenId);
+    }
+
+    /// @notice Claims multiple tokens in a batch
+    /// @param tokenIds The token IDs to claim
+    function claimBatch(uint256[] calldata tokenIds) external {
+        if (claimsClosed) revert ClaimsClosed();
+        if (tokenIds.length > 100) revert BatchTooLarge();
+
+        for (uint256 i; i < tokenIds.length; ++i) {
+            oldChimpers.transferFrom(msg.sender, address(this), tokenIds[i]);
+            newChimpers.mint(msg.sender, tokenIds[i]);
+        }
     }
 }
