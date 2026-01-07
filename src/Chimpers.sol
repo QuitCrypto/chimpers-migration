@@ -28,6 +28,9 @@ contract Chimpers is ERC721, OwnableRoles, ICreatorToken, IERC2981 {
     /// @notice Default royalty in basis points (e.g., 500 = 5%)
     uint96 private _royaltyBps;
 
+    /// @notice Migration contract address (set once)
+    address private _migrationContract;
+
     /*//////////////////////////////////////////////////////////////
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
@@ -101,6 +104,36 @@ contract Chimpers is ERC721, OwnableRoles, ICreatorToken, IERC2981 {
     function setDefaultRoyalty(address receiver, uint96 bps) external onlyOwner {
         _royaltyReceiver = receiver;
         _royaltyBps = bps;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                              MIGRATION
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Error when caller is not the migration contract
+    error OnlyMigrationContract();
+
+    /// @notice Error when migration contract is already set
+    error MigrationContractAlreadySet();
+
+    /// @notice Mints a token to the specified address
+    /// @param to The address to mint to
+    /// @param tokenId The token ID to mint
+    function mint(address to, uint256 tokenId) external {
+        if (msg.sender != _migrationContract) revert OnlyMigrationContract();
+        _mint(to, tokenId);
+    }
+
+    /// @notice Sets the migration contract address (one-time only)
+    /// @param migrationContract_ The migration contract address
+    function setMigrationContract(address migrationContract_) external onlyOwner {
+        if (_migrationContract != address(0)) revert MigrationContractAlreadySet();
+        _migrationContract = migrationContract_;
+    }
+
+    /// @notice Returns the migration contract address
+    function getMigrationContract() external view returns (address) {
+        return _migrationContract;
     }
 
     /*//////////////////////////////////////////////////////////////
