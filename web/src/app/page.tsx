@@ -6,11 +6,17 @@ import { useAccount } from 'wagmi';
 import { useUserChimpers } from '@/hooks/useUserChimpers';
 import { TokenGrid } from '@/components/TokenGrid';
 import { ApprovalButton } from '@/components/ApprovalButton';
+import { MigrateButton } from '@/components/MigrateButton';
 
 export default function Home() {
   const { address, isConnected } = useAccount();
-  const { tokenIds, isLoading, error } = useUserChimpers(address);
+  const { tokenIds, isLoading, error, refetch } = useUserChimpers(address);
   const [selectedIds, setSelectedIds] = useState<Set<bigint>>(new Set());
+
+  const handleMigrationSuccess = () => {
+    setSelectedIds(new Set());
+    refetch();
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-8 font-[family-name:var(--font-geist-sans)]">
@@ -37,7 +43,14 @@ export default function Home() {
             />
 
             {tokenIds.length > 0 && (
-              <ApprovalButton ownerAddress={address} />
+              <div className="flex flex-col gap-4 items-center">
+                <ApprovalButton ownerAddress={address} />
+                <MigrateButton
+                  selectedIds={selectedIds}
+                  ownerAddress={address}
+                  onSuccess={handleMigrationSuccess}
+                />
+              </div>
             )}
           </>
         )}
