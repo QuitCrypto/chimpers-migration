@@ -67,6 +67,12 @@ contract Chimpers is ERC721, OwnableRoles, ICreatorToken, IERC2981 {
         return string(abi.encodePacked(_baseURI, LibString.toString(id)));
     }
 
+    /// @notice Sets the base URI for token metadata
+    /// @param baseURI_ The new base URI
+    function setBaseURI(string memory baseURI_) external onlyOwner {
+        _baseURI = baseURI_;
+    }
+
     /*//////////////////////////////////////////////////////////////
                             ICREATORTOKEN
     //////////////////////////////////////////////////////////////*/
