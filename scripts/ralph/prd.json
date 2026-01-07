@@ -1,0 +1,287 @@
+{
+  "branchName": "ralph/chimpers-migration",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Chimpers.sol skeleton",
+      "acceptanceCriteria": [
+        "Create src/Chimpers.sol",
+        "Inherit ERC721 from solady",
+        "Inherit OwnableRoles from solady",
+        "Constructor accepts name, symbol, baseURI",
+        "Compiles without errors"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Base contract structure only"
+    },
+    {
+      "id": "US-002",
+      "title": "Chimpers.sol ICreatorToken",
+      "acceptanceCriteria": [
+        "Install limitbreak creator-token-standards",
+        "Implement ICreatorToken interface",
+        "Add transferValidator storage and getter",
+        "Add setTransferValidator admin function",
+        "Compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "ERC721C royalty enforcement hook"
+    },
+    {
+      "id": "US-003",
+      "title": "Chimpers.sol ERC2981 royalties",
+      "acceptanceCriteria": [
+        "Implement ERC2981 royaltyInfo",
+        "Constructor accepts royaltyReceiver and royaltyBps",
+        "Add setDefaultRoyalty admin function",
+        "supportsInterface returns true for ERC2981",
+        "Compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "On-chain royalty info"
+    },
+    {
+      "id": "US-004",
+      "title": "Chimpers.sol migration minting",
+      "acceptanceCriteria": [
+        "Add migrationContract immutable address",
+        "Add mint(address to, uint256 tokenId) function",
+        "mint reverts if caller is not migrationContract",
+        "Add setMigrationContract one-time setter",
+        "Compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Restricted minting for migration"
+    },
+    {
+      "id": "US-005",
+      "title": "Chimpers.sol metadata",
+      "acceptanceCriteria": [
+        "Store baseURI in storage",
+        "Override tokenURI to return baseURI + tokenId",
+        "Add setBaseURI admin function",
+        "Compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Metadata URI handling"
+    },
+    {
+      "id": "US-006",
+      "title": "ChimpersMigration.sol skeleton",
+      "acceptanceCriteria": [
+        "Create src/ChimpersMigration.sol",
+        "Inherit OwnableRoles from solady",
+        "Store oldChimpers and newChimpers as immutables",
+        "Constructor accepts both addresses",
+        "Compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Migration contract base"
+    },
+    {
+      "id": "US-007",
+      "title": "ChimpersMigration.sol claim",
+      "acceptanceCriteria": [
+        "Add claimsClosed bool storage",
+        "Add claim(uint256 tokenId) function",
+        "Transfers old token from caller to this contract",
+        "Calls newChimpers.mint(msg.sender, tokenId)",
+        "Reverts if claimsClosed is true",
+        "Compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Single token claim"
+    },
+    {
+      "id": "US-008",
+      "title": "ChimpersMigration.sol claimBatch",
+      "acceptanceCriteria": [
+        "Add claimBatch(uint256[] calldata tokenIds) function",
+        "Loops through tokenIds, transfers each, mints each",
+        "Reverts if tokenIds.length > 100",
+        "Reverts if claimsClosed is true",
+        "Compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Batch claiming up to 100"
+    },
+    {
+      "id": "US-009",
+      "title": "ChimpersMigration.sol admin functions",
+      "acceptanceCriteria": [
+        "Add closeClaims() admin function",
+        "Add claimUnclaimed(uint256[] calldata tokenIds, address treasury) admin function",
+        "claimUnclaimed reverts if claimsClosed is false",
+        "claimUnclaimed mints to treasury address",
+        "Compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Admin controls for migration window"
+    },
+    {
+      "id": "US-010",
+      "title": "Unit tests: Chimpers.sol",
+      "acceptanceCriteria": [
+        "Create test/Chimpers.t.sol",
+        "Test mint from migration contract succeeds",
+        "Test mint from non-migration reverts",
+        "Test royaltyInfo returns correct values",
+        "Test setBaseURI updates tokenURI",
+        "forge test passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "New collection unit tests"
+    },
+    {
+      "id": "US-011",
+      "title": "Unit tests: ChimpersMigration.sol",
+      "acceptanceCriteria": [
+        "Create test/ChimpersMigration.t.sol",
+        "Test claim transfers old and mints new",
+        "Test claimBatch with multiple tokens",
+        "Test claimBatch reverts over 100 tokens",
+        "Test closeClaims blocks further claims",
+        "forge test passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Migration contract unit tests"
+    },
+    {
+      "id": "US-012",
+      "title": "Fork tests: real token migration",
+      "acceptanceCriteria": [
+        "Create test/ChimpersMigration.fork.t.sol",
+        "Fork mainnet at recent block",
+        "Impersonate a real Chimpers holder",
+        "Test claim with real token ID",
+        "Test claimBatch with real token IDs",
+        "forge test --fork-url passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Integration tests against mainnet state"
+    },
+    {
+      "id": "US-013",
+      "title": "Fork tests: admin flows",
+      "acceptanceCriteria": [
+        "Test closeClaims then claim reverts",
+        "Test claimUnclaimed after close succeeds",
+        "Test claimUnclaimed for already-claimed token reverts",
+        "forge test --fork-url passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Admin function integration tests"
+    },
+    {
+      "id": "US-014",
+      "title": "Deployment script",
+      "acceptanceCriteria": [
+        "Create script/Deploy.s.sol",
+        "Deploy Chimpers with placeholder royalty values",
+        "Deploy ChimpersMigration with both addresses",
+        "Call setMigrationContract on Chimpers",
+        "Script runs without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Foundry deployment script"
+    },
+    {
+      "id": "US-015",
+      "title": "Website: Next.js + RainbowKit setup",
+      "acceptanceCriteria": [
+        "Create web/ directory with Next.js 14 app",
+        "Install RainbowKit, wagmi, viem",
+        "Configure for Ethereum mainnet",
+        "ConnectButton renders on page",
+        "npm run dev starts without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Frontend scaffolding"
+    },
+    {
+      "id": "US-016",
+      "title": "Website: fetch user tokens",
+      "acceptanceCriteria": [
+        "Install Alchemy SDK",
+        "Create hook useUserChimpers(address)",
+        "Fetches old Chimpers owned by address",
+        "Returns array of token IDs",
+        "Handles loading and error states"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Token fetching with Alchemy"
+    },
+    {
+      "id": "US-017",
+      "title": "Website: token selection UI",
+      "acceptanceCriteria": [
+        "Display grid of user's unmigrated tokens",
+        "Each token is selectable via checkbox",
+        "Show selected count",
+        "Select all / deselect all buttons",
+        "Disable selection if no tokens"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Token selection interface"
+    },
+    {
+      "id": "US-018",
+      "title": "Website: approval flow",
+      "acceptanceCriteria": [
+        "Check isApprovedForAll on old contract",
+        "If not approved, show Approve button",
+        "Approve button calls setApprovalForAll",
+        "Show pending state during tx",
+        "Update UI on approval success"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "ERC721 approval handling"
+    },
+    {
+      "id": "US-019",
+      "title": "Website: claim transaction",
+      "acceptanceCriteria": [
+        "Migrate button calls claimBatch with selected IDs",
+        "Show pending state during tx",
+        "Show success message on completion",
+        "Refresh token list after success",
+        "Show error message on failure"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Migration transaction flow"
+    },
+    {
+      "id": "US-020",
+      "title": "Website: styling and polish",
+      "acceptanceCriteria": [
+        "Install and configure Tailwind CSS",
+        "Style connect button area",
+        "Style token grid",
+        "Style action buttons",
+        "Responsive layout for mobile"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Visual polish"
+    }
+  ]
+}

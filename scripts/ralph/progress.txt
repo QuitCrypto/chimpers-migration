@@ -1,0 +1,21 @@
+# Ralph Progress Log
+Started: 2026-01-7
+
+## Codebase Patterns
+- Solady imports: `import {X} from "solady/path/X.sol";`
+- OwnableRoles: Must call `_initializeOwner(msg.sender)` in constructor
+- ERC721 metadata: Override `name()`, `symbol()`, `tokenURI()` as abstract
+
+## Key Files
+- src/Chimpers.sol - New Chimpers ERC721 collection
+
+---
+
+## 2026-01-07 - US-001
+- What was implemented: Chimpers.sol skeleton with ERC721 + OwnableRoles
+- Files changed: src/Chimpers.sol (new)
+- **Learnings:**
+  - Solady ERC721 requires overriding name(), symbol(), tokenURI() as they are abstract
+  - OwnableRoles requires calling _initializeOwner() in constructor (no auto-init)
+  - LibString.toString() for uint256 to string conversion
+---
