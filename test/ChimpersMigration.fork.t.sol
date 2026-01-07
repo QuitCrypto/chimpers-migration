@@ -136,4 +136,71 @@ contract ChimpersMigrationForkTest is Test {
             assertEq(newChimpers.ownerOf(holder2TokenIds[i]), holder2);
         }
     }
+
+    /*//////////////////////////////////////////////////////////////
+                        ADMIN FLOWS (US-013)
+    //////////////////////////////////////////////////////////////*/
+
+    function test_Fork_CloseClaimsThenClaimReverts() public {
+        // Verify holder1 owns the token
+        assertEq(oldChimpers.ownerOf(holder1TokenId), holder1);
+
+        // Holder1 approves migration contract
+        vm.prank(holder1);
+        oldChimpers.approve(address(migration), holder1TokenId);
+
+        // Owner closes claims
+        migration.closeClaims();
+
+        // Holder1 tries to claim - should revert
+        vm.prank(holder1);
+        vm.expectRevert(ChimpersMigration.ClaimsClosed.selector);
+        migration.claim(holder1TokenId);
+    }
+
+    function test_Fork_ClaimUnclaimedAfterCloseSucceeds() public {
+        address treasury = address(0x77EA5);
+
+        // Close claims first
+        migration.closeClaims();
+
+        // Find an unclaimed token (one we haven't migrated)
+        uint256 unclaimedTokenId = holder1TokenId;
+
+        // Owner claims unclaimed token to treasury
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = unclaimedTokenId;
+
+        migration.claimUnclaimed(tokenIds, treasury);
+
+        // Verify new token minted to treasury
+        assertEq(newChimpers.ownerOf(unclaimedTokenId), treasury);
+
+        // Old token still with original holder (not transferred)
+        assertEq(oldChimpers.ownerOf(unclaimedTokenId), holder1);
+    }
+
+    function test_Fork_ClaimUnclaimedForAlreadyClaimedTokenReverts() public {
+        address treasury = address(0x77EA5);
+
+        // First, holder1 claims their token
+        vm.prank(holder1);
+        oldChimpers.approve(address(migration), holder1TokenId);
+
+        vm.prank(holder1);
+        migration.claim(holder1TokenId);
+
+        // Verify claim succeeded
+        assertEq(newChimpers.ownerOf(holder1TokenId), holder1);
+
+        // Now close claims
+        migration.closeClaims();
+
+        // Try to claim the same token as unclaimed - should revert because already minted
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = holder1TokenId;
+
+        vm.expectRevert(); // ERC721 will revert on duplicate mint
+        migration.claimUnclaimed(tokenIds, treasury);
+    }
 }
