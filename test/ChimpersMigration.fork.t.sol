@@ -22,8 +22,8 @@ contract ChimpersMigrationForkTest is Test {
     uint256[] public holder2TokenIds;
 
     function setUp() public {
-        // Fork mainnet at latest block
-        vm.createSelectFork(vm.envString("MAINNET_RPC_URL"));
+        // Fork mainnet at specific block for deterministic tests
+        vm.createSelectFork(vm.envString("MAINNET_RPC_URL"), 24185220);
 
         oldChimpers = IERC721(OLD_CHIMPERS);
 
