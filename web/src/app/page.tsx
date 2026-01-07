@@ -5,6 +5,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
 import { useUserChimpers } from '@/hooks/useUserChimpers';
 import { TokenGrid } from '@/components/TokenGrid';
+import { ApprovalButton } from '@/components/ApprovalButton';
 
 export default function Home() {
   const { address, isConnected } = useAccount();
@@ -34,6 +35,10 @@ export default function Home() {
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
             />
+
+            {tokenIds.length > 0 && (
+              <ApprovalButton ownerAddress={address} />
+            )}
           </>
         )}
       </main>
