@@ -26,7 +26,7 @@
         "Compiles without errors"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "ERC721C royalty enforcement hook"
     },
     {
@@ -40,7 +40,7 @@
         "Compiles without errors"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "On-chain royalty info"
     },
     {
@@ -54,7 +54,7 @@
         "Compiles without errors"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Restricted minting for migration"
     },
     {
@@ -67,7 +67,7 @@
         "Compiles without errors"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Metadata URI handling"
     },
     {
@@ -81,7 +81,7 @@
         "Compiles without errors"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Migration contract base"
     },
     {
@@ -96,7 +96,7 @@
         "Compiles without errors"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Single token claim"
     },
     {
@@ -110,7 +110,7 @@
         "Compiles without errors"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Batch claiming up to 100"
     },
     {
@@ -124,7 +124,7 @@
         "Compiles without errors"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Admin controls for migration window"
     },
     {
@@ -139,7 +139,7 @@
         "forge test passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "New collection unit tests"
     },
     {
@@ -154,7 +154,7 @@
         "forge test passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Migration contract unit tests"
     },
     {
@@ -169,7 +169,7 @@
         "forge test --fork-url passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Integration tests against mainnet state"
     },
     {
@@ -182,7 +182,7 @@
         "forge test --fork-url passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Admin function integration tests"
     },
     {
@@ -196,7 +196,7 @@
         "Script runs without errors"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Foundry deployment script"
     },
     {
@@ -210,7 +210,7 @@
         "npm run dev starts without errors"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Frontend scaffolding"
     },
     {
@@ -224,7 +224,7 @@
         "Handles loading and error states"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Token fetching with Alchemy"
     },
     {
@@ -238,7 +238,7 @@
         "Disable selection if no tokens"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Token selection interface"
     },
     {
@@ -252,7 +252,7 @@
         "Update UI on approval success"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "ERC721 approval handling"
     },
     {
@@ -266,7 +266,7 @@
         "Show error message on failure"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Migration transaction flow"
     },
     {
@@ -280,8 +280,18 @@
         "Responsive layout for mobile"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Visual polish"
+    },
+    {
+      "id": "US-021",
+      "title": "Test efficiency",
+      "acceptanceCriteria": [
+        "Fork test should run against block number 24185220, which helps prevent the test from pulling new state each time it runs"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Test efficiency"
     }
   ]
 }

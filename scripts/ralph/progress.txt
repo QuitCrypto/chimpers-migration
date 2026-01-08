@@ -5,6 +5,10 @@ Started: 2026-01-7
 - Solady imports: `import {X} from "solady/path/X.sol";`
 - OwnableRoles: Must call `_initializeOwner(msg.sender)` in constructor
 - ERC721 metadata: Override `name()`, `symbol()`, `tokenURI()` as abstract
+- Creator-token-standards: Use `forge install limitbreakinc/creator-token-standards` (no --no-commit flag)
+- ICreatorToken: Import from `creator-token-standards/src/interfaces/ICreatorToken.sol`
+- ERC2981: Import IERC2981 and IERC165 from openzeppelin-contracts
+- supportsInterface: Override with (ERC721, IERC165) to resolve diamond inheritance
 
 ## Key Files
 - src/Chimpers.sol - New Chimpers ERC721 collection
@@ -18,4 +22,204 @@ Started: 2026-01-7
   - Solady ERC721 requires overriding name(), symbol(), tokenURI() as they are abstract
   - OwnableRoles requires calling _initializeOwner() in constructor (no auto-init)
   - LibString.toString() for uint256 to string conversion
+---
+
+## 2026-01-07 - US-002
+- What was implemented: ICreatorToken interface for ERC721-C royalty enforcement
+- Files changed: src/Chimpers.sol (modified)
+- **Learnings:**
+  - ICreatorToken requires: getTransferValidator(), getTransferValidationFunction(), setTransferValidator()
+  - getTransferValidationFunction() can return (bytes4(0), false) as placeholder - actual validation logic is optional
+  - TransferValidatorUpdated event is defined in interface, no need to redeclare
+  - Use `onlyOwner` modifier from OwnableRoles for admin functions
+---
+
+## 2026-01-07 - US-003
+- What was implemented: ERC2981 royalty standard support
+- Files changed: src/Chimpers.sol (modified)
+- **Learnings:**
+  - Use IERC2981 from openzeppelin-contracts for the interface
+  - royaltyInfo returns (receiver, amount) - amount is calculated as (salePrice * bps) / 10000
+  - supportsInterface must override both ERC721 and IERC165 to avoid Solidity linearization errors
+  - Constructor now accepts royaltyReceiver and royaltyBps params
+---
+
+## 2026-01-07 - US-004
+- What was implemented: Migration minting with restricted access
+- Files changed: src/Chimpers.sol (modified)
+- **Learnings:**
+  - Use storage variable (not immutable) for migrationContract since it's set post-deployment
+  - One-time setter pattern: check `_migrationContract != address(0)` before allowing set
+  - Custom errors for access control: `OnlyMigrationContract`, `MigrationContractAlreadySet`
+  - Added getter `getMigrationContract()` for external visibility
+---
+
+## 2026-01-07 - US-005
+- What was implemented: setBaseURI admin function for metadata updates
+- Files changed: src/Chimpers.sol (modified)
+- **Learnings:**
+  - baseURI storage and tokenURI override were already in place from US-001 skeleton
+  - setBaseURI follows same pattern as other admin functions: external + onlyOwner
+  - Forge lint notes about underscore variables are stylistic (not errors)
+---
+
+## 2026-01-07 - US-006
+- What was implemented: ChimpersMigration.sol skeleton with OwnableRoles and immutable addresses
+- Files changed: src/ChimpersMigration.sol (new)
+- **Learnings:**
+  - Use IERC721 from openzeppelin for old contract interface (for transferFrom)
+  - newChimpers stored as address (not interface) since we call custom mint() function
+  - Same OwnableRoles pattern: call _initializeOwner(msg.sender) in constructor
+  - Forge lint prefers SCREAMING_SNAKE_CASE for immutables but existing code uses mixedCase
+---
+
+## 2026-01-07 - US-007
+- What was implemented: claim() function for single token migration
+- Files changed: src/ChimpersMigration.sol (modified)
+- **Learnings:**
+  - Define minimal IChimpers interface in same file for mint() call
+  - Changed newChimpers from address to IChimpers type for cleaner calls
+  - claimsClosed check comes before external calls (checks-effects-interactions)
+  - transferFrom pulls token from msg.sender to this contract, then mints new
+---
+
+## 2026-01-07 - US-008
+- What was implemented: claimBatch() for multi-token migration
+- Files changed: src/ChimpersMigration.sol (modified)
+- **Learnings:**
+  - Use calldata for array params (cheaper than memory)
+  - Use `uint256 i;` without initializing to 0 (gas savings)
+  - Use `++i` prefix increment (gas savings)
+  - Batch limit of 100 prevents gas limit issues
+---
+
+## 2026-01-07 - US-009
+- What was implemented: Admin functions closeClaims() and claimUnclaimed()
+- Files changed: src/ChimpersMigration.sol (modified)
+- **Learnings:**
+  - claimUnclaimed requires claims to be closed first (ClaimsNotClosed error)
+  - claimUnclaimed mints directly to treasury (no transfer needed for unclaimed)
+  - No batch limit on claimUnclaimed since admin controls it and can break into multiple calls
+  - onlyOwner modifier from OwnableRoles works same as Ownable
+---
+
+## 2026-01-07 - US-010
+- What was implemented: Unit tests for Chimpers.sol (13 tests)
+- Files changed: test/Chimpers.t.sol (new)
+- **Learnings:**
+  - Import ERC721 from solady to access TokenDoesNotExist error selector
+  - Use vm.prank for single call impersonation, vm.startPrank/stopPrank for multiple
+  - Foundry test naming: test_ prefix for passing, test_RevertWhen_ for revert tests
+  - vm.expectRevert(Contract.ErrorName.selector) for custom error assertions
+---
+
+## 2026-01-07 - US-011
+- What was implemented: Unit tests for ChimpersMigration.sol (8 tests)
+- Files changed: test/ChimpersMigration.t.sol (new)
+- **Learnings:**
+  - Create MockOldChimpers contract inheriting solady ERC721 for testing
+  - Must override name(), symbol(), tokenURI() as they're abstract
+  - Test approvals: use approve() for single, setApprovalForAll() for batch
+  - Hex addresses must be valid hex (0x7REA5 invalid, 0x77EA5 valid)
+---
+
+## 2026-01-07 - US-012
+- What was implemented: Fork tests against real mainnet Chimpers
+- Files changed: test/ChimpersMigration.fork.t.sol (new)
+- **Learnings:**
+  - Real Chimpers address: 0x80336Ad7A747236ef41F47ed2C7641828a480BAA (checksum matters!)
+  - vm.createSelectFork(url) forks at latest block; (url, blockNumber) for specific block
+  - Use vm.envString("MAINNET_RPC_URL") to read env vars in tests
+  - PublicNode RPC (https://ethereum-rpc.publicnode.com) works for free fork tests
+  - Dynamically find holders via ownerOf() calls in setUp
+---
+
+## 2026-01-07 - US-013
+- What was implemented: Admin flow fork tests (3 tests)
+- Files changed: test/ChimpersMigration.fork.t.sol (modified)
+- **Learnings:**
+  - claimUnclaimed mints to treasury but doesn't transfer old token (mint-only)
+  - Already-claimed tokens can't be claimed via claimUnclaimed (ERC721 reverts on duplicate)
+  - vm.expectRevert() without args catches any revert
+---
+
+## 2026-01-07 - US-014
+- What was implemented: Foundry deployment script
+- Files changed: script/Deploy.s.sol (new)
+- **Learnings:**
+  - Import console from forge-std/Script for logging
+  - Use vm.startBroadcast()/vm.stopBroadcast() for transactions
+  - Placeholder royalty receiver: address(0xDEAD)
+  - Dry-run with: forge script script/Deploy.s.sol --fork-url $RPC -vvv
+  - Add --broadcast for real deployment
+---
+
+## 2026-01-07 - US-015
+- What was implemented: Next.js 14 + RainbowKit frontend scaffold
+- Files changed: web/ (new directory)
+- **Learnings:**
+  - npx create-next-app@14 web --typescript --tailwind --eslint --app --src-dir
+  - RainbowKit requires wagmi, viem, @tanstack/react-query
+  - Use getDefaultConfig from @rainbow-me/rainbowkit for quick setup
+  - Providers must be 'use client' and wrap app in layout.tsx
+  - Set ssr: true in config for Next.js SSR compatibility
+---
+
+## 2026-01-07 - US-016
+- What was implemented: useUserChimpers hook with Alchemy SDK
+- Files changed: web/src/hooks/useUserChimpers.ts (new)
+- **Learnings:**
+  - Alchemy SDK: alchemy.nft.getNftsForOwner(address, { contractAddresses: [...] })
+  - Use useCallback for functions passed to useEffect deps
+  - Return refetch function for manual refresh
+  - Use NEXT_PUBLIC_ prefix for client-side env vars
+---
+
+## 2026-01-07 - US-017
+- What was implemented: Token selection UI with grid and controls
+- Files changed: web/src/components/TokenGrid.tsx (new), web/src/app/page.tsx (modified)
+- **Learnings:**
+  - Use Set<bigint> for selected IDs (bigint for token IDs)
+  - Pass selection state up to parent via onSelectionChange callback
+  - Tailwind: aspect-square for equal height/width
+  - Grid responsive: grid-cols-4 sm:grid-cols-5 md:grid-cols-6
+---
+
+## 2026-01-07 - US-018
+- What was implemented: ERC721 approval flow
+- Files changed: web/src/hooks/useApproval.ts (new), web/src/components/ApprovalButton.tsx (new)
+- **Learnings:**
+  - wagmi v2: useReadContract, useWriteContract, useWaitForTransactionReceipt
+  - Query enabled option: query: { enabled: !!address }
+  - Define minimal ABI inline with `as const` for type safety
+  - Refetch approval status after successful transaction
+---
+
+## 2026-01-07 - US-019
+- What was implemented: Migration claim transaction
+- Files changed: web/src/hooks/useMigrate.ts (new), web/src/components/MigrateButton.tsx (new)
+- **Learnings:**
+  - Pass bigint[] to contract call (Array.from(Set))
+  - useWriteContract returns reset function for state cleanup
+  - Call parent onSuccess callback to trigger refetch
+  - Show success UI inline after migration completes
+---
+
+## 2026-01-07 - US-020
+- What was implemented: Visual polish with responsive layout
+- Files changed: web/src/app/page.tsx (modified)
+- **Learnings:**
+  - Tailwind gradient backgrounds: bg-gradient-to-b from-gray-50 to-gray-100
+  - Header sticky blur: backdrop-blur-sm bg-white/50
+  - Responsive padding: px-4 sm:px-6 lg:px-8
+  - Card sections: rounded-2xl shadow-lg with appropriate padding
+---
+
+## 2026-01-07 - US-021
+- What was implemented: Pinned fork tests to block 24185220
+- Files changed: test/ChimpersMigration.fork.t.sol (modified)
+- **Learnings:**
+  - vm.createSelectFork(url, blockNumber) pins to specific block for deterministic tests
+  - Pinning prevents RPC from fetching new state each run, improving test speed
+  - Block 24185220 was chosen as a recent stable block with known Chimpers holder state
 ---
